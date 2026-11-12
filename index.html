@@ -68,6 +68,13 @@ button:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px so
 .notice{border-radius:10px;padding:10px 14px;font-size:14px;background:var(--accent-soft);color:var(--ink)}
 .notice.err{background:var(--bad-bg);color:var(--bad)}
 
+.gate{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px;background:var(--part-bg);border:1px solid var(--part);border-radius:var(--r);padding:16px 20px}
+.gate-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 280px}
+.gate-text b{font-size:16px;color:var(--ink)}
+.gate-text span{font-size:14px;color:var(--muted)}
+.gate-actions{display:flex;gap:8px;flex-wrap:wrap}
+a.btn{text-decoration:none}
+.linkbtn{align-self:flex-start;border:0;background:none;padding:0;color:var(--accent);font:500 14px var(--ko);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .typed{display:flex;flex-direction:column;gap:8px}
 .typed textarea,#custom-input{width:100%;min-height:72px;resize:vertical;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);padding:10px 12px;font:16px/1.5 var(--en)}
 .typed .row{display:flex;gap:8px;flex-wrap:wrap}
@@ -126,6 +133,15 @@ details p{margin:0;color:var(--muted);font-size:14px}
     </div>
   </header>
 
+  <div class="gate" id="gate" hidden>
+    <div class="gate-text"><b id="gate-title"></b><span id="gate-desc"></span></div>
+    <div class="gate-actions">
+      <a class="btn mic" id="gate-open" href="#" hidden></a>
+      <button class="btn" id="gate-copy" type="button">링크 복사</button>
+      <a class="btn" id="gate-get" href="https://www.google.com/chrome/" target="_blank" rel="noopener" hidden>Chrome 설치</a>
+    </div>
+  </div>
+
   <section class="card" aria-live="polite">
     <div class="meta"><span id="pos">1 / 8</span><span id="best"></span></div>
     <p class="sentence" id="sentence" lang="en"></p>
@@ -143,8 +159,9 @@ details p{margin:0;color:var(--muted);font-size:14px}
     </div>
     <div class="live" id="live"><span class="hint">‘말하기’를 누르고 문장을 읽어 보세요. 다 읽고 잠시 멈추면 자동으로 채점돼요.</span></div>
     <div class="notice" id="notice" hidden></div>
+    <button class="linkbtn" id="typed-toggle" type="button">음성 인식이 안 되나요? 키보드로 입력해서 채점하기</button>
     <div class="typed" id="typed" hidden>
-      <label for="typed-input" class="sub" style="margin:0">이 화면에서는 음성 인식을 쓸 수 없어요. 휴대폰·태블릿 키보드의 <b>마이크(음성 입력)</b>를 영어로 바꿔 말하거나, 들린 문장을 입력한 뒤 채점하세요.</label>
+      <label for="typed-input" class="sub" id="typed-label" style="margin:0"></label>
       <textarea id="typed-input" lang="en" placeholder="Speak or type here…"></textarea>
       <div class="row"><button class="btn" id="typed-go" type="button">채점하기</button></div>
     </div>
@@ -181,7 +198,7 @@ details p{margin:0;color:var(--muted);font-size:14px}
     </details>
   </section>
 
-  <p class="foot"><b>선생님께</b> · 음성 인식은 문맥을 보고 단어를 추측하기 때문에 실제 발음보다 점수가 조금 후하게 나올 수 있어요. 정밀한 발음 평가보다는 <b>“내 말이 기계에도 통하는가”</b>를 확인하는 말하기 연습용으로 써 주세요. 음성 인식은 크롬(Chrome)·엣지 브라우저나 Claude 데스크톱 앱에서 동작하고, 학생 음성은 이 페이지에 저장되지 않아요.</p>
+  <p class="foot"><b>선생님께</b> · 음성 인식은 문맥을 보고 단어를 추측하기 때문에 실제 발음보다 점수가 조금 후하게 나올 수 있어요. 정밀한 발음 평가보다는 <b>“내 말이 기계에도 통하는가”</b>를 확인하는 말하기 연습용으로 써 주세요. 말하기 채점은 컴퓨터·안드로이드에서는 <b>Chrome</b>, iPhone·iPad에서는 <b>Safari</b>에서 동작해요. 다른 브라우저로 열면 맨 위에 여는 방법이 안내되고, 어디서든 키보드 음성 입력으로 채점할 수 있어요. 학생 음성은 저장되지 않아요.</p>
 </div>
 
 <script>
@@ -195,7 +212,9 @@ details p{margin:0;color:var(--muted);font-size:14px}
       ["Can you help me with my homework?","내 숙제 좀 도와줄 수 있어?"],
       ["There are thirty students in my class.","우리 반에는 학생이 서른 명 있어."],
       ["I don't eat breakfast on weekends.","나는 주말에는 아침을 먹지 않아."],
-      ["How was your weekend?","주말 어땠어?"]
+      ["How was your weekend?","주말 어땠어?"],
+      ["My favorite subject is science because it is fun.","내가 가장 좋아하는 과목은 과학이야. 재미있거든."],
+      ["Let's meet in front of the library at three.","3시에 도서관 앞에서 만나자."]
     ],
     m2: [
       ["I have been learning English for three years.","나는 3년 동안 영어를 배워 왔어."],
@@ -205,7 +224,9 @@ details p{margin:0;color:var(--muted);font-size:14px}
       ["He was so tired that he fell asleep on the bus.","그는 너무 피곤해서 버스에서 잠들었어."],
       ["Have you ever been to Jeju Island?","제주도에 가 본 적 있어?"],
       ["I'm looking forward to the school festival.","나는 학교 축제가 정말 기대돼."],
-      ["Let's recycle plastic bottles to protect the environment.","환경을 지키기 위해 플라스틱병을 재활용하자."]
+      ["Let's recycle plastic bottles to protect the environment.","환경을 지키기 위해 플라스틱병을 재활용하자."],
+      ["I want to be a doctor to help sick people.","나는 아픈 사람들을 돕기 위해 의사가 되고 싶어."],
+      ["Minho is taller than his older brother.","민호는 형보다 키가 커."]
     ],
     m3: [
       ["If I were a bird, I would fly over the mountains.","내가 새라면 산 위를 날아갈 텐데."],
@@ -215,7 +236,9 @@ details p{margin:0;color:var(--muted);font-size:14px}
       ["This bridge was built about a hundred years ago.","이 다리는 약 100년 전에 지어졌어."],
       ["Not only students but also teachers enjoyed the concert.","학생들뿐 아니라 선생님들도 콘서트를 즐겼어."],
       ["She asked me where the library was.","그녀는 나에게 도서관이 어디 있는지 물었어."],
-      ["Technology has changed the way we communicate.","기술은 우리가 소통하는 방식을 바꾸었어."]
+      ["Technology has changed the way we communicate.","기술은 우리가 소통하는 방식을 바꾸었어."],
+      ["I have never seen such a beautiful sunset before.","나는 전에 이렇게 아름다운 노을을 본 적이 없어."],
+      ["Do you know who invented the telephone?","누가 전화기를 발명했는지 알아?"]
     ],
     custom: []
   };
@@ -397,7 +420,51 @@ details p{margin:0;color:var(--muted);font-size:14px}
     clearTimeout(autoTimer);
     autoTimer = setTimeout(()=>{ if (dictState==="listening" && buffer.trim() && !partial) dict.stop().catch(()=>{}); }, 1800);
   }
-  function showFallback(){ $("typed").hidden = false; $("mic").hidden = true; setLive(null); }
+  /* ---------- device & browser detection ---------- */
+  const APP_URL = "https://parkchan70.github.io/say-it-pronunciation/";
+  const ua = navigator.userAgent || "";
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  const isKakao = /KAKAOTALK/i.test(ua);
+  const isRealChrome = !isIOS && /Chrome\/\d+/.test(ua) && !/Edg\/|EdgA\/|OPR\/|Whale\/|SamsungBrowser|YaBrowser|NAVER|KAKAOTALK|DaumApps|Instagram|FBAN|FBAV|Line\/|; wv\)/i.test(ua);
+  const hasSR = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const usingClaudeDictation = () => dict && !dict.__web;
+
+  $("typed-label").innerHTML = isIOS
+    ? "iPhone 키보드의 <b>🌐 버튼으로 English 키보드</b>로 바꾼 뒤, 키보드의 <b>마이크 버튼</b>을 누르고 말하세요. 다 말하면 ‘채점하기’를 누르세요."
+    : isAndroid
+    ? "키보드의 <b>마이크 버튼(음성 입력)</b>을 누르고 영어로 말하거나, 들린 문장을 입력한 뒤 ‘채점하기’를 누르세요."
+    : "들린 문장을 입력하거나 붙여 넣은 뒤 ‘채점하기’를 누르세요.";
+
+  function gate(title, desc, open){
+    $("gate-title").textContent = title; $("gate-desc").textContent = desc;
+    const a = $("gate-open");
+    if (open) { a.href = open.href; a.textContent = open.label; a.hidden = false; } else a.hidden = true;
+    $("gate-get").hidden = isIOS || isAndroid || !!open;
+    $("gate").hidden = false;
+  }
+  function checkBrowser(force){
+    if (usingClaudeDictation()) return;
+    if (isIOS) {
+      if (isKakao) return gate("카카오톡 안에서는 마이크를 쓸 수 없어요", "Safari로 열면 말하기 채점을 할 수 있어요.", { href: "kakaotalk://web/openExternal?url=" + encodeURIComponent(APP_URL), label: "Safari로 열기" });
+      if (!hasSR || force) return gate("iPhone에서는 Safari로 열어 주세요", "‘링크 복사’를 누른 뒤 Safari 주소창에 붙여 넣으세요. 지금 화면에서는 아래 ‘키보드로 입력해서 채점하기’를 쓸 수 있어요.", null);
+      return;
+    }
+    if (isAndroid && (!isRealChrome || force)) {
+      return gate("Chrome에서 열어야 말하기 채점이 돼요", "아래 버튼을 누르면 Chrome으로 바로 열려요.", { href: "intent://" + APP_URL.replace(/^https:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent("https://play.google.com/store/apps/details?id=com.android.chrome") + ";end", label: "Chrome으로 열기" });
+    }
+    if (!isAndroid && (!isRealChrome || !hasSR || force)) {
+      return gate("Chrome에서 열어야 말하기 채점이 돼요", "‘링크 복사’를 누르고 Chrome 주소창에 붙여 넣으세요. Chrome이 없으면 먼저 설치해 주세요.", null);
+    }
+  }
+  $("gate-copy").addEventListener("click", ()=>{
+    const done = ()=>{ $("gate-copy").textContent = "복사했어요"; setTimeout(()=> $("gate-copy").textContent = "링크 복사", 2000); };
+    const manual = ()=>{ $("gate-desc").textContent = "아래 주소를 길게 눌러 복사하세요: " + APP_URL; };
+    try { navigator.clipboard.writeText(APP_URL).then(done, manual); } catch(e) { manual(); }
+  });
+  $("typed-toggle").addEventListener("click", ()=>{ $("typed").hidden = false; $("typed-toggle").hidden = true; $("typed-input").focus(); });
+
+  function showFallback(){ $("typed").hidden = false; $("typed-toggle").hidden = true; $("mic").hidden = true; setLive(null); checkBrowser(true); }
 
   $("mic").addEventListener("click", ()=>{
     if (!dictReady) { notice("음성 인식을 준비하고 있어요. 잠시 뒤에 다시 눌러 주세요."); return; }
@@ -453,7 +520,7 @@ details p{margin:0;color:var(--muted);font-size:14px}
     return {
       start(){
         return new Promise(res=>{
-          rec = new SR(); rec.lang = "en-US"; rec.interimResults = true; rec.continuous = true; reason = null;
+          rec = new SR(); rec.lang = "en-US"; rec.interimResults = true; rec.continuous = !isIOS; reason = null;
           rec.onstart = ()=>{ emit("state",{state:"listening"}); res(); };
           rec.onresult = e=>{
             let interim = "";
@@ -466,6 +533,7 @@ details p{margin:0;color:var(--muted);font-size:14px}
           try { rec.start(); } catch(e) { reason = "upstream_error"; rec = null; emit("state",{state:"idle", reason}); res(); }
         });
       },
+      __web: true,
       stop(){ if (rec) { emit("state",{state:"finishing"}); rec.stop(); } return Promise.resolve(); },
       onState(f){ h.state.push(f); }, onPartial(f){ h.partial.push(f); }, onFinal(f){ h.final.push(f); }
     };
@@ -474,14 +542,18 @@ details p{margin:0;color:var(--muted);font-size:14px}
     if (!d) d = webSpeech();
     dict = d; dictReady = true; notice(null);
     if (!d) { showFallback(); return; }
-    setLive(null);
+    setLive(null); checkBrowser(false);
     d.onState(({state:s, reason})=>{
       dictState = s; micUI();
       if (s === "idle") {
         clearTimeout(autoTimer);
         const text = (buffer + " " + partial).trim(); partial = "";
         if (reason === "stopped" || reason === "viewer_stopped" || reason === "hidden" || reason === "time_limit") { if (text) grade(text); else if (reason !== "hidden") { notice("아무 말도 들리지 않았어요. 마이크 가까이에서 다시 말해 보세요.", true); setLive(null); } }
-        else if (reason && ERR[reason]) { notice(ERR[reason], true); if (reason==="unavailable"||reason==="not_granted") showFallback(); }
+        else if (reason && ERR[reason]) {
+          if (dict.__web && reason === "upstream_error") { notice("이 브라우저에서는 음성 인식이 되지 않아요. 위 안내대로 다른 브라우저로 열거나 키보드로 입력해 주세요.", true); showFallback(); }
+          else if (dict.__web && reason === "not_granted") { notice(isIOS ? "마이크나 음성 인식이 허용되지 않았어요. 설정 > Safari > 마이크, 그리고 설정 > Siri의 받아쓰기가 켜져 있는지 확인해 주세요." : ERR.not_granted, true); $("typed").hidden = false; $("typed-toggle").hidden = true; }
+          else { notice(ERR[reason], true); if (reason==="unavailable"||reason==="not_granted") showFallback(); }
+        }
       }
     });
     d.onPartial(({text})=>{ partial = text || ""; setLive(buffer, partial); if (partial) clearTimeout(autoTimer); else armAuto(); });
